@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sales Inbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<!-- Login gate -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div class="login-mark">◆</div>
+    <h1>Sales Inbox</h1>
+    <p class="muted">Enter your admin key to continue</p>
+    <input id="login-key" type="password" placeholder="Admin key" autocomplete="off" />
+    <button id="login-submit">Enter</button>
+    <p id="login-error" class="error-text"></p>
+  </div>
+</div>
+
+<!-- Main app -->
+<div id="app" class="app hidden">
+
+  <!-- Left rail: brand + analytics + stage filters -->
+  <aside class="rail">
+    <div class="rail-brand">
+      <span class="mark">◆</span>
+      <span class="brand-name">Sales Inbox</span>
+      <span id="live-dot" class="live-dot" title="Live connection"></span>
+    </div>
+
+    <div class="analytics">
+      <div class="metric">
+        <div class="metric-value" id="m-newLeads">–</div>
+        <div class="metric-label">New leads</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value hot" id="m-hotLeads">–</div>
+        <div class="metric-label">Hot leads</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value" id="m-demosBooked">–</div>
+        <div class="metric-label">Demos booked</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value won" id="m-conversionRate">–</div>
+        <div class="metric-label">Conversion</div>
+      </div>
+    </div>
+
+    <div class="stage-filters" id="stage-filters">
+      <button class="stage-chip active" data-stage="">All</button>
+      <!-- populated with stage chips by JS -->
+    </div>
+
+    <div class="rail-footer">
+      <button id="logout-btn" class="ghost-btn">Sign out</button>
+    </div>
+  </aside>
+
+  <!-- Middle: inbox list -->
+  <section class="inbox">
+    <div class="inbox-header">
+      <button id="menu-btn" class="menu-btn" title="Open Menu">☰</button>
+      <input id="search-input" type="text" placeholder="Search conversations…" />
+      <button id="new-conv-btn" class="new-conv-btn" title="Start a new conversation">✏</button>
+    </div>
+    <div class="inbox-list" id="inbox-list">
+      <!-- populated by JS -->
+    </div>
+  </section>
+
+  <!-- Right: conversation pane -->
+  <section class="conversation" id="conversation-pane">
+    <div class="empty-state" id="conversation-empty">
+      <div class="empty-mark">◆</div>
+      <p>Select a conversation to get started</p>
+    </div>
+
+    <div class="conversation-active hidden" id="conversation-active">
+      <header class="conv-header">
+        <button id="back-btn" class="back-btn" title="Back to Inbox">←</button>
+        <div class="conv-identity">
+          <div class="conv-name" id="conv-name">—</div>
+          <div class="conv-waid" id="conv-waid">—</div>
+        </div>
+        <div class="conv-controls">
+          <span id="paused-indicator" class="paused-indicator hidden">Human is handling this</span>
+          <button id="pause-btn" class="ghost-btn">Take over</button>
+          <button id="resume-btn" class="ghost-btn hidden">Hand back to bot</button>
+          <button id="drawer-toggle-btn" class="drawer-toggle-btn" title="Lead Profile">👤</button>
+        </div>
+      </header>
+
+      <div class="stage-stepper" id="stage-stepper"><!-- populated by JS --></div>
+
+      <div class="summary-bar" id="summary-bar">
+        <div class="summary-text" id="summary-text">No summary yet.</div>
+        <button id="summarize-btn" class="tiny-btn ai-tag">Summarize</button>
+      </div>
+
+      <div class="messages" id="messages"><!-- populated by JS --></div>
+
+      <div class="composer">
+        <div class="composer-row">
+          <textarea id="composer-input" placeholder="Type a message…" rows="2"></textarea>
+        </div>
+        <div class="composer-actions">
+          <button id="attach-image-btn" class="icon-btn" title="Send image">🖼️</button>
+          <button id="attach-doc-btn" class="icon-btn" title="Send PDF/document">📎</button>
+          <button id="attach-buttons-btn" class="icon-btn" title="Send quick-reply buttons">⌗</button>
+          <button id="attach-list-btn" class="icon-btn" title="Send a list">≡</button>
+          <button id="suggest-btn" class="tiny-btn ai-tag">Suggest reply</button>
+          <div class="spacer"></div>
+          <button id="send-btn" class="primary-btn">Send</button>
+        </div>
+        <input type="file" id="file-input-image" accept="image/*" class="hidden-file" />
+        <input type="file" id="file-input-doc" accept="application/pdf" class="hidden-file" />
+      </div>
+    </div>
+
+    <!-- Lead profile drawer -->
+    <div class="lead-drawer hidden" id="lead-drawer">
+      <div class="lead-drawer-header">
+        <h3>Lead profile</h3>
+        <button id="drawer-close-btn" class="drawer-close-btn" title="Close Profile">×</button>
+      </div>
+      <dl id="lead-fields"></dl>
+    </div>
+  </section>
+</div>
+
+<!-- Buttons/list composer modal -->
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal" id="modal-content"><!-- populated by JS --></div>
+</div>
+
+<div id="drawer-overlay" class="drawer-overlay hidden"></div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

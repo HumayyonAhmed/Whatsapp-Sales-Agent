@@ -1,0 +1,152 @@
+{
+  "test_2_user": {
+    "history": [
+      {
+        "id": "f043ae9a0d863328",
+        "role": "user",
+        "content": "Haan, Ali Water Business hai mera",
+        "type": "text",
+        "mediaId": null,
+        "caption": null,
+        "filename": null,
+        "timestamp": 1784114802024
+      },
+      {
+        "id": "4f7c6dc024249a66",
+        "role": "assistant",
+        "content": "Ali Water Business — acha, rozana kitni deliveries hoti hain?",
+        "type": "text",
+        "mediaId": null,
+        "caption": null,
+        "filename": null,
+        "timestamp": 1784114802024
+      }
+    ],
+    "lead": {
+      "name": null,
+      "email": null,
+      "budget": null,
+      "timeline": null,
+      "use_case": null,
+      "business_name": "Ali Water Business",
+      "city": null,
+      "daily_deliveries": null,
+      "current_method": null,
+      "biggest_challenge": null,
+      "phone": null,
+      "address": null,
+      "status": "engaged",
+      "score": 0
+    },
+    "stage": "New",
+    "stageHistory": [
+      {
+        "stage": "New",
+        "at": 1784114802021
+      }
+    ],
+    "paused": false,
+    "alertedHot": false,
+    "trialActivationSent": false,
+    "unreadCount": 1,
+    "lastReadAt": 1784114802021,
+    "summary": null,
+    "summaryUpdatedAt": null,
+    "createdAt": 1784114802021,
+    "updatedAt": 1784114802025,
+    "lastActivity": 1784114802023
+  },
+  "test_3_user": {
+    "history": [
+      {
+        "id": "f82f988633287f93",
+        "role": "user",
+        "content": "sure",
+        "type": "text",
+        "mediaId": null,
+        "caption": null,
+        "filename": null,
+        "timestamp": 1784114802224
+      },
+      {
+        "id": "18f3c591978221ae",
+        "role": "assistant",
+        "content": "Demo dekhna chahenge ya seedha trial start karna chahenge?",
+        "type": "text",
+        "mediaId": null,
+        "caption": null,
+        "filename": null,
+        "timestamp": 1784114802224
+      }
+    ],
+    "lead": {
+      "name": null,
+      "email": null,
+      "budget": null,
+      "timeline": null,
+      "use_case": null,
+      "business_name": null,
+      "city": null,
+      "daily_deliveries": null,
+      "current_method": null,
+      "biggest_challenge": null,
+      "phone": null,
+      "address": null,
+      "status": "engaged",
+      "score": 0
+    },
+    "stage": "New",
+    "stageHistory": [
+      {
+        "stage": "New",
+        "at": 1784114802221
+      }
+    ],
+    "paused": false,
+    "alertedHot": false,
+    "trialActivationSent": false,
+    "unreadCount": 1,
+    "lastReadAt": 1784114802221,
+    "summary": null,
+    "summaryUpdatedAt": null,
+    "createdAt": 1784114802221,
+    "updatedAt": 1784114802238,
+    "lastActivity": 1784114802224
+  },
+  "test_4_user": {
+    "history": [],
+    "lead": {
+      "name": null,
+      "email": null,
+      "budget": null,
+      "timeline": null,
+      "use_case": null,
+      "business_name": null,
+      "city": null,
+      "daily_deliveries": null,
+      "current_method": null,
+      "biggest_challenge": null,
+      "phone": null,
+      "address": null,
+      "status": "new",
+      "score": 0
+    },
+    "stage": "New",
+    "stageHistory": [
+      {
+        "stage": "New",
+        "at": 1784114802485
+      }
+    ],
+    "paused": false,
+    "alertedHot": false,
+    "trialActivationSent": false,
+    "unreadCount": 0,
+    "lastReadAt": 1784114802485,
+    "summary": null,
+    "summaryUpdatedAt": null,
+    "createdAt": 1784114802485,
+    "updatedAt": 1784114802485,
+    "lastActivity": 1784114802485
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "whatsapp-sales-agent",
+  "version": "1.0.0",
+  "description": "WhatsApp sales agent using Meta Cloud API + Groq LLM, with a sales dashboard",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^2.2.0",
+    "pino": "^9.4.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

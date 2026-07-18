@@ -1,0 +1,12 @@
+services:
+  whatsapp-sales-agent:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data          # persist leads across restarts
+      - ./config:/app/config      # edit agent.json / knowledge base without rebuilding
+      - ./public:/app/public      # edit dashboard HTML/CSS/JS without rebuilding
+    restart: unless-stopped
