@@ -8,6 +8,11 @@ const GROQ_API_URL = process.env.GROQ_API_URL || "https://api.groq.com/openai/v1
 // Check https://console.groq.com/docs/models for the current model list
 const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
+const LLM_PROVIDER = process.env.LLM_PROVIDER || "groq";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+const GEMINI_API_URL = process.env.GEMINI_API_URL || "https://generativelanguage.googleapis.com/v1beta/models";
+
 function buildSystemPrompt(kbContext) {
   const cfg = getConfig();
   const { business, goal, persona, qualifying_questions, hot_lead_criteria, scenarios, lead_fields, activation, system_prompt_extra } = cfg;
@@ -92,6 +97,47 @@ async function getAgentReply({ history, userMessage, currentLead }) {
   const kbChunks = knowledgeBase.retrieve(userMessage, 1);
   const kbContext = kbChunks.join("\n\n---\n\n");
 
+  if (LLM_PROVIDER === "gemini") {
+    const systemInstruction = buildSystemPrompt(kbContext) + "\n\n" + `Known lead data so far: ${JSON.stringify(currentLead)}`;
+    const contents = [
+      ...history.map(({ role, content }) => ({
+        role: role === "user" ? "user" : "model",
+        parts: [{ text: content }]
+      })),
+      {
+        role: "user",
+        parts: [{ text: userMessage }]
+      }
+    ];
+
+    const { data } = await withRetry(
+      () =>
+        axios.post(
+          `${GEMINI_API_URL}/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            contents,
+            systemInstruction: {
+              parts: [{ text: systemInstruction }]
+            },
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.4
+            }
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            timeout: 20_000,
+          }
+        ),
+      { label: "Gemini chat completion" }
+    );
+
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
+    return parseAgentJson(raw);
+  }
+
   const messages = [
     { role: "system", content: buildSystemPrompt(kbContext) },
     { role: "system", content: `Known lead data so far: ${JSON.stringify(currentLead)}` },
@@ -151,6 +197,48 @@ function fallbackReply() {
 }
 
 async function plainCompletion(messages, { temperature = 0.3, maxTokens = 300 } = {}) {
+  if (LLM_PROVIDER === "gemini") {
+    const systemMessages = messages.filter((m) => m.role === "system");
+    const otherMessages = messages.filter((m) => m.role !== "system");
+
+    const systemInstruction = systemMessages.map((m) => m.content).join("\n\n");
+    const contents = otherMessages.map(({ role, content }) => ({
+      role: role === "user" ? "user" : "model",
+      parts: [{ text: content }]
+    }));
+
+    const payload = {
+      contents,
+      generationConfig: {
+        temperature,
+        maxOutputTokens: maxTokens
+      }
+    };
+
+    if (systemInstruction) {
+      payload.systemInstruction = {
+        parts: [{ text: systemInstruction }]
+      };
+    }
+
+    const { data } = await withRetry(
+      () =>
+        axios.post(
+          `${GEMINI_API_URL}/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+          payload,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            timeout: 20_000,
+          }
+        ),
+      { label: "Gemini plain completion" }
+    );
+
+    return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+  }
+
   const { data } = await withRetry(
     () =>
       axios.post(

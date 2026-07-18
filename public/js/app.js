@@ -424,7 +424,7 @@ function openNewConversationModal() {
     <input id="nc-phone" type="tel" placeholder="e.g. 03001234567 or 923001234567" autocomplete="off" />
     <p class="modal-hint">Pakistani numbers starting with 0 are auto-converted (03xx → 923xx).</p>
     <label class="modal-label">Opening message</label>
-    <textarea id="nc-message" rows="3" placeholder="Type your first message to this contact…"></textarea>
+    <textarea id="nc-message" rows="3" placeholder="Type your first message to this contact…">Assalam-o-Alaikum! Kya ye water supply business ka number hai?</textarea>
     <p id="nc-error" class="modal-error"></p>
     <div class="modal-actions">
       <button class="ghost-btn" id="nc-cancel">Cancel</button>

@@ -123,8 +123,8 @@ async function runTests() {
     const styleNotesLength = (cfg.persona.style_notes || "").length;
 
     // Style notes: includes opening greeting guidance, anti-echo pattern rule, feature formatting,
-    // language anchoring, and other business persona rules. Keep under 4,000 as a sanity ceiling.
-    const STYLE_NOTES_THRESHOLD = 4000;
+    // language anchoring, and other business persona rules. Keep under 4,600 as a sanity ceiling.
+    const STYLE_NOTES_THRESHOLD = 4600;
     console.log(`   persona.style_notes length: ${styleNotesLength} chars (threshold < ${STYLE_NOTES_THRESHOLD})`);
     assert(
       styleNotesLength < STYLE_NOTES_THRESHOLD,

@@ -164,7 +164,10 @@ async function handleMessage(waId, message) {
   let agentResult;
   try {
     agentResult = await getAgentReply({
-      history: session.history.slice(-MAX_HISTORY_MESSAGES).map(({ role, content }) => ({ role, content })),
+      history: session.history.slice(-MAX_HISTORY_MESSAGES).map(({ role, content }) => ({
+        role: role === "user" ? "user" : "assistant",
+        content,
+      })),
       userMessage: text,
       currentLead: session.lead,
     });
