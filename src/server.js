@@ -6,7 +6,7 @@ const express = require("express");
 const { sendText, markRead } = require("./whatsapp");
 const { getAgentReply, fallbackReply } = require("./groq");
 const store = require("./store");
-const { notifyHotLead, notifyTrialReady } = require("./leadNotifier");
+const { notifyHotLead, notifyActivation } = require("./leadNotifier");
 const { getConfig } = require("./configLoader");
 const { isDuplicate } = require("./idempotency");
 const { allow: rateLimitAllow } = require("./rateLimiter");
@@ -192,7 +192,8 @@ async function handleMessage(waId, message) {
   for (const [key, value] of Object.entries(agentResult.lead_update || {})) {
     if (value) session.lead[key] = value;
   }
-  if (agentResult.wants_trial && !session.lead.phone) {
+  const activation = cfg.activation;
+  if (activation?.enabled && activation?.trigger_field && agentResult[activation.trigger_field] && !session.lead.phone) {
     session.lead.phone = waId;
   }
   if (agentResult.status) session.lead.status = agentResult.status;
@@ -228,18 +229,18 @@ async function handleMessage(waId, message) {
     });
   }
 
-  const REQUIRED_FOR_ACTIVATION = ["business_name", "name", "phone", "email", "address"];
   if (
-    agentResult.wants_trial &&
-    REQUIRED_FOR_ACTIVATION.every((f) => session.lead[f]) &&
-    !session.trialActivationSent
+    activation?.enabled &&
+    activation?.trigger_field &&
+    agentResult[activation.trigger_field] &&
+    (activation.required_fields || []).every((f) => session.lead[f]) &&
+    !session.activationSent && !session.trialActivationSent
   ) {
-    session.trialActivationSent = true;
-    await notifyTrialReady({ waId, lead: session.lead });
-    
-    // Auto-escalate and pause chatbot once all trial details are collected
-    session.lead.status = "escalated";
-    session.paused = true;
+    session.activationSent = true;
+    await notifyActivation({ waId, lead: session.lead, cfg });
+
+    if (activation.auto_escalate) session.lead.status = "escalated";
+    if (activation.auto_pause) session.paused = true;
   }
 
   store.saveSession(waId, session);
@@ -278,14 +279,15 @@ function extractInbound(message) {
   return { role: "user", content: "[unsupported message type]", type: "unsupported" };
 }
 
-// Simple, transparent lead score (0-100) combining profile completeness + LLM signal
+// Config-driven lead score (0-100) combining profile completeness + LLM signal
 function scoreLead(lead, isHot) {
+  const cfg = getConfig();
   let score = 0;
-  if (lead.name) score += 15;
-  if (lead.email) score += 20;
-  if (lead.use_case) score += 15;
-  if (lead.budget) score += 20;
-  if (lead.timeline) score += 15;
+  for (const field of (cfg.lead_fields || [])) {
+    if (field.score_points && lead[field.id]) {
+      score += field.score_points;
+    }
+  }
   if (isHot) score += 15;
   return Math.min(score, 100);
 }

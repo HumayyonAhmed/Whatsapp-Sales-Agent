@@ -31,18 +31,20 @@ async function notifyHotLead({ waId, lead, internalNote, reason = "hot lead" }) 
   }
 }
 
-async function notifyTrialReady({ waId, lead }) {
+async function notifyActivation({ waId, lead, cfg }) {
+  const activation = cfg?.activation || {};
+  const title = activation.notification_title || "ACTIVATION READY";
+
+  // Format lead fields dynamically from config
+  const leadFields = (cfg?.lead_fields || [])
+    .filter((f) => lead[f.id])
+    .map((f) => `${f.label}: ${lead[f.id]}`)
+    .join("\n");
+
   const summary =
-    `🚀 TRIAL READY TO ACTIVATE\n` +
+    `🚀 ${title}\n` +
     `From: ${waId}\n` +
-    `Business Name: ${lead.business_name || "unknown"}\n` +
-    `Owner Name: ${lead.name || "unknown"}\n` +
-    `Phone: ${lead.phone || "unknown"}\n` +
-    `Email: ${lead.email || "unknown"}\n` +
-    `Address: ${lead.address || "unknown"}\n` +
-    `City: ${lead.city || "unknown"}\n` +
-    `Daily Deliveries: ${lead.daily_deliveries || "unknown"}\n` +
-    `Current Method: ${lead.current_method || "unknown"}`;
+    leadFields;
 
   logger.info({ waId, lead }, summary);
 
@@ -63,4 +65,4 @@ async function notifyTrialReady({ waId, lead }) {
   }
 }
 
-module.exports = { notifyHotLead, notifyTrialReady };
+module.exports = { notifyHotLead, notifyActivation };

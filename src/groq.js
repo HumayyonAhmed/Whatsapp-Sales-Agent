@@ -10,7 +10,7 @@ const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
 function buildSystemPrompt(kbContext) {
   const cfg = getConfig();
-  const { business, goal, persona, qualifying_questions, hot_lead_criteria, scenarios } = cfg;
+  const { business, goal, persona, qualifying_questions, hot_lead_criteria, scenarios, lead_fields, activation, system_prompt_extra } = cfg;
 
   const questionsList = (qualifying_questions || [])
     .map((q) => `- ${q.id}: "${q.ask}"`)
@@ -19,6 +19,24 @@ function buildSystemPrompt(kbContext) {
   const scenarioList = (scenarios || [])
     .map((s) => `- When: ${s.when}\n  Do: ${s.instruction}`)
     .join("\n");
+
+  // Build lead_update JSON schema dynamically from config
+  const leadFieldsSchema = (lead_fields || [])
+    .map((f) => `    "${f.id}": string or null`)
+    .join(",\n");
+
+  // Build activation trigger field for JSON output shape, if configured
+  const activationTriggerLine = activation?.enabled && activation?.trigger_field
+    ? `  "${activation.trigger_field}": boolean,\n`
+    : "";
+
+  // Build activation-related output rules, if configured
+  let activationRules = "";
+  if (activation?.enabled && activation?.trigger_field && activation?.required_fields?.length) {
+    const reqFields = activation.required_fields.join(", ");
+    activationRules =
+      `- Once ${activation.trigger_field} is true, check "Known lead data so far". If any of [${reqFields}] are null, keep asking for them one at a time (framed as "so we can set your account up"). Do NOT say "we've got everything we need" until all are confirmed present.\n`;
+  }
 
   return `You are a WhatsApp sales assistant for ${business.name}.
 
@@ -32,7 +50,7 @@ TONE & STYLE:
 ${persona.tone}. ${persona.style_notes}
 
 ANTI-HALLUCINATION (reply text):
-Before writing any reply, check the "Known lead data so far" block. NEVER state, imply, or guess any specific detail — city, business name, delivery count, or any other fact — that the visitor has not explicitly stated. This includes asking "[city] mein operate kar rahe hain?" as a guess — do NOT guess a city even framed as a clarifying question. If city is not in "Known lead data so far" and the visitor has not just stated it, ask "Aap kis city mein hain?" with no city name attached. Same rule applies to all other details.
+Before writing any reply, check the "Known lead data so far" block. NEVER state, imply, or guess any specific detail that the visitor has not explicitly stated. If a detail is not in "Known lead data so far" and the visitor has not just stated it, ask for it without guessing. Same rule applies to all details.
 
 QUALIFYING QUESTIONS (ask at most one per message, only when it fits naturally, never as a rigid checklist):
 ${questionsList || "(none configured)"}
@@ -48,47 +66,26 @@ ${kbContext ? `RELEVANT KNOWLEDGE BASE EXCERPTS (use this to answer accurately; 
 OUTPUT RULES (structural — do not override with business logic):
 - If you don't know something, say so honestly and say a team member will follow up.
 - Refund, legal, or dispute requests: do not resolve yourself. Set status "escalated", is_hot_lead false (unless it's also a genuine buying signal), and flag for human handoff.
-- Once wants_trial is true, check "Known lead data so far". If name, business_name, email, or address are null, keep asking for them one at a time (framed as "so we can set your account up"). Do NOT say "we've got everything we need" until all four are confirmed present.
-- Set wants_trial true ONLY when the visitor has explicitly agreed to START THE TRIAL — not for demo agreement, not for vague "sure"/"okay" to a demo-only question.
-
+${activationRules}
 You must respond with ONLY a raw JSON object (no markdown fences, no extra
 text) matching this exact shape:
 {
   "reply": "the WhatsApp message to send back to the visitor",
   "lead_update": {
-    "name": string or null,
-    "email": string or null,
-    "budget": string or null,
-    "timeline": string or null,
-    "use_case": string or null,
-    "business_name": string or null,
-    "city": string or null,
-    "daily_deliveries": string or null,
-    "current_method": string or null,
-    "biggest_challenge": string or null,
-    "phone": string or null,
-    "address": string or null
+${leadFieldsSchema}
   },
   "status": "new" | "engaged" | "qualified" | "hot" | "escalated" | "customer",
   "is_hot_lead": boolean,
-  "wants_trial": boolean,
-  "internal_note": "short note to sales rep explaining why, empty string if not hot"
+${activationTriggerLine}  "internal_note": "short note to sales rep explaining why, empty string if not hot"
 }
 
 Only set lead_update fields when the visitor actually revealed that info in
 this message or earlier in the conversation; otherwise use null so existing
 data isn't overwritten.
 
-CRITICAL — ALWAYS set dedicated fields AND use_case:
-- When the visitor mentions a number of deliveries (e.g. "20 ghar roz", "30 per day", "40 roz"), set daily_deliveries to that number as a string (e.g. "20") in addition to including it in use_case.
-- When the visitor mentions their city, set city to that city string in addition to use_case.
-- When the visitor mentions their current method (register/Excel/WhatsApp), set current_method to that string in addition to use_case.
-- When the visitor gives their business name, set business_name to that string in addition to use_case.
-Never rely on use_case alone — the individual fields are what drive the bot's "don't re-ask" check.
+${system_prompt_extra || ""}
 
-Set is_hot_lead true only for a genuine strong buying signal, not just casual interest.
-Set wants_trial true specifically when the visitor has just agreed to START THE TRIAL (not merely a demo, not merely "interested").
-Once wants_trial is true in "Known lead data so far": stop all qualifying questions immediately. Only collect the remaining activation fields (name, business_name, email, address) one at a time.`;
+Set is_hot_lead true only for a genuine strong buying signal, not just casual interest.`;
 }
 
 async function getAgentReply({ history, userMessage, currentLead }) {
@@ -133,7 +130,6 @@ function parseAgentJson(raw) {
       lead_update: {},
       status: null,
       is_hot_lead: false,
-      wants_trial: false,
       internal_note: "",
     };
   }
@@ -142,13 +138,14 @@ function parseAgentJson(raw) {
 // Fallback reply used when the Groq API is unreachable/erroring, so the
 // visitor never gets silence.
 function fallbackReply() {
+  const cfg = getConfig();
+  const fallbackMsg = cfg.fallback_message ||
+    `Apologies, we're having a quick connection issue on our side. A member of our ${cfg.business?.name || "team"} has been alerted and will message you directly here shortly! Thank you for your patience. 🙏`;
   return {
-    reply:
-      "Apologies, we're having a quick connection issue on our side. A member of our AquaFlow team has been alerted and will message you directly here shortly! Thank you for your patience. 🙏\n(Aap se maazrat, humare side pe thora connection issue hai. AquaFlow team se koi jald hi aap se yahan contact karega! Shukriya.)",
+    reply: fallbackMsg,
     lead_update: {},
     status: "escalated",
     is_hot_lead: false,
-    wants_trial: false,
     internal_note: "LLM call failed — automatic fallback triggered.",
   };
 }
@@ -202,6 +199,12 @@ async function suggestReply(history, currentLead) {
     history.filter((m) => m.role === "user").slice(-1)[0]?.content || "",
     1
   );
+  const cleanHistory = (history || [])
+    .slice(-8)
+    .map(({ role, content }) => ({
+      role: role === "user" ? "user" : "assistant",
+      content,
+    }));
   const messages = [
     { role: "system", content: buildSystemPrompt(kbChunks.join("\n\n---\n\n")) },
     { role: "system", content: `Known lead data so far: ${JSON.stringify(currentLead)}` },
@@ -212,7 +215,7 @@ async function suggestReply(history, currentLead) {
         "review and possibly edit before sending. Respond with ONLY the suggested WhatsApp " +
         "message text — no JSON, no explanation, just the message itself.",
     },
-    ...history,
+    ...cleanHistory,
   ];
   return plainCompletion(messages, { temperature: 0.5, maxTokens: 200 });
 }

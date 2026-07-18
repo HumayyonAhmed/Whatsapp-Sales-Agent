@@ -29,7 +29,7 @@ const whatsapp = require("./src/whatsapp");
 
 // Mock arrays to store state and verify expectations
 let mockAgentReplies = [];
-let notifyTrialReadyCalls = [];
+let notifyActivationCalls = [];
 let notifyHotLeadCalls = [];
 
 // Override module functions
@@ -46,8 +46,8 @@ groq.getAgentReply = async () => {
   return mockAgentReplies.shift();
 };
 
-leadNotifier.notifyTrialReady = async (args) => {
-  notifyTrialReadyCalls.push(args);
+leadNotifier.notifyActivation = async (args) => {
+  notifyActivationCalls.push(args);
 };
 
 leadNotifier.notifyHotLead = async (args) => {
@@ -104,8 +104,8 @@ async function runTests() {
 
   await sendWebhookMessage("I want to start a free trial");
   console.log("Sent Message 1.");
-  if (notifyTrialReadyCalls.length !== 0) {
-    throw new Error("FAIL: notifyTrialReady triggered prematurely (only business_name is set)");
+  if (notifyActivationCalls.length !== 0) {
+    throw new Error("FAIL: notifyActivation triggered prematurely (only business_name is set)");
   }
 
   // Message 2: Visitor provides name. Mock update: wants_trial: true, name: "Ahmad".
@@ -119,8 +119,8 @@ async function runTests() {
 
   await sendWebhookMessage("My name is Ahmad");
   console.log("Sent Message 2.");
-  if (notifyTrialReadyCalls.length !== 0) {
-    throw new Error("FAIL: notifyTrialReady triggered prematurely (email and address still missing)");
+  if (notifyActivationCalls.length !== 0) {
+    throw new Error("FAIL: notifyActivation triggered prematurely (email and address still missing)");
   }
 
   // Message 3: Visitor provides email. Mock update: wants_trial: true, email: "ahmad@oasis.com".
@@ -134,8 +134,8 @@ async function runTests() {
 
   await sendWebhookMessage("My email is ahmad@oasis.com");
   console.log("Sent Message 3.");
-  if (notifyTrialReadyCalls.length !== 0) {
-    throw new Error("FAIL: notifyTrialReady triggered prematurely (address still missing)");
+  if (notifyActivationCalls.length !== 0) {
+    throw new Error("FAIL: notifyActivation triggered prematurely (address still missing)");
   }
 
   // Message 4: Visitor provides address. Mock update: wants_trial: true, address: "123 Main St Lahore".
@@ -152,11 +152,11 @@ async function runTests() {
   await sendWebhookMessage("My address is 123 Main St Lahore");
   console.log("Sent Message 4.");
 
-  if (notifyTrialReadyCalls.length !== 1) {
-    throw new Error(`FAIL: notifyTrialReady should have fired exactly once. Count: ${notifyTrialReadyCalls.length}`);
+  if (notifyActivationCalls.length !== 1) {
+    throw new Error(`FAIL: notifyActivation should have fired exactly once. Count: ${notifyActivationCalls.length}`);
   }
 
-  const notification = notifyTrialReadyCalls[0];
+  const notification = notifyActivationCalls[0];
   if (notification.waId !== "123456789") {
     throw new Error(`FAIL: unexpected waId in notification: ${notification.waId}`);
   }
@@ -166,7 +166,7 @@ async function runTests() {
   if (notification.lead.business_name !== "Aqua Oasis" || notification.lead.name !== "Ahmad" || notification.lead.email !== "ahmad@oasis.com" || notification.lead.address !== "123 Main St Lahore") {
     throw new Error("FAIL: missing fields in lead notification payload");
   }
-  console.log("✅ notifyTrialReady fired correctly with all fields and phone fallback!");
+  console.log("✅ notifyActivation fired correctly with all fields and phone fallback!");
 
   // Message 5: Subsequent message. wants_trial remains true, but notification should not repeat.
   mockAgentReplies.push({
@@ -179,12 +179,12 @@ async function runTests() {
 
   await sendWebhookMessage("Just checking in");
   console.log("Sent Message 5.");
-  if (notifyTrialReadyCalls.length !== 1) {
-    throw new Error(`FAIL: notifyTrialReady fired repeatedly! Count: ${notifyTrialReadyCalls.length}`);
+  if (notifyActivationCalls.length !== 1) {
+    throw new Error(`FAIL: notifyActivation fired repeatedly! Count: ${notifyActivationCalls.length}`);
   }
-  console.log("✅ notifyTrialReady did not fire repeatedly!");
+  console.log("✅ notifyActivation did not fire repeatedly!");
 
-  // Verify dashboard api response includes trialReady: true
+  // Verify dashboard api response includes activationReady: true
   const res = await axios.get("http://localhost:3001/api/conversations", {
     headers: { "x-admin-key": "test-admin-key" }
   });
@@ -192,10 +192,10 @@ async function runTests() {
   if (!conversation) {
     throw new Error("FAIL: Conversation not found in dashboard api response");
   }
-  if (conversation.trialReady !== true) {
-    throw new Error(`FAIL: trialReady should be true on dashboard api, got: ${conversation.trialReady}`);
+  if (conversation.activationReady !== true) {
+    throw new Error(`FAIL: activationReady should be true on dashboard api, got: ${conversation.activationReady}`);
   }
-  console.log("✅ Dashboard api includes trialReady: true!");
+  console.log("✅ Dashboard api includes activationReady: true!");
 
   console.log("\n🎉 ALL TESTS PASSED SUCCESSFULLY! 🎉");
 }

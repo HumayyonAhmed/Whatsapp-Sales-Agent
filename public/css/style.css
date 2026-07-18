@@ -172,7 +172,7 @@ button { font-family: inherit; }
   letter-spacing: 0.03em;
 }
 .tag.hot, .tag.escalated { color: var(--signal); border-color: var(--signal-dim); background: var(--signal-dim); }
-.tag.trial-ready { color: var(--ai-accent); border-color: var(--ai-accent-dim); background: var(--ai-accent-dim); }
+.tag.activation-ready { color: var(--ai-accent); border-color: var(--ai-accent-dim); background: var(--ai-accent-dim); }
 .tag.won { color: var(--success); border-color: var(--success-dim); background: var(--success-dim); }
 .tag.lost { color: var(--neutral-stage); }
 .unread-dot {

@@ -57,7 +57,7 @@ whatsapp.sendText = async (_waId, text) => {
 };
 whatsapp.markRead = async () => {};
 
-leadNotifier.notifyTrialReady = async () => {};
+leadNotifier.notifyActivation = async () => {};
 leadNotifier.notifyHotLead = async () => {};
 
 // ── Start server ───────────────────────────────────────────────────────────
@@ -122,10 +122,9 @@ async function runTests() {
     const cfg = getConfig();
     const styleNotesLength = (cfg.persona.style_notes || "").length;
 
-    // Style notes: includes (a) the intentional concrete feature-format example (Fix 6), and now
-    // also (b) opening greeting guidance and (c) anti-echo pattern rule — both are new distinct rules,
-    // not duplication. Current size is ~3,300 chars. Keep under 3,600 as a sanity ceiling.
-    const STYLE_NOTES_THRESHOLD = 3600;
+    // Style notes: includes opening greeting guidance, anti-echo pattern rule, feature formatting,
+    // language anchoring, and other business persona rules. Keep under 4,000 as a sanity ceiling.
+    const STYLE_NOTES_THRESHOLD = 4000;
     console.log(`   persona.style_notes length: ${styleNotesLength} chars (threshold < ${STYLE_NOTES_THRESHOLD})`);
     assert(
       styleNotesLength < STYLE_NOTES_THRESHOLD,

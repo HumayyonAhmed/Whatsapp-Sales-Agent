@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const logger = require("./logger");
+const { getConfig } = require("./configLoader");
 
 const DB_PATH = path.join(__dirname, "..", "data", "sessions.json");
 
@@ -33,29 +34,22 @@ function saveAll(db) {
 
 function emptySession() {
   const now = Date.now();
+  const cfg = getConfig();
+  const lead = {};
+  for (const field of (cfg.lead_fields || [])) {
+    lead[field.id] = null;
+  }
+  lead.status = "new"; // internal AI pipeline: new -> engaged -> qualified -> hot -> escalated -> customer
+  lead.score = 0;
+
   return {
     history: [], // [{id, role: 'user'|'assistant'|'agent', content, timestamp, type, mediaId?, caption?, filename?}]
-    lead: {
-      name: null,
-      email: null,
-      budget: null,
-      timeline: null,
-      use_case: null,
-      business_name: null,
-      city: null,
-      daily_deliveries: null,
-      current_method: null,
-      biggest_challenge: null,
-      phone: null,
-      address: null,
-      status: "new", // internal AI pipeline: new -> engaged -> qualified -> hot -> escalated -> customer
-      score: 0,
-    },
+    lead,
     stage: "New", // dashboard-facing sales pipeline, rep-controlled
     stageHistory: [{ stage: "New", at: now }],
     paused: false, // true once a human has taken over (manual send, escalation, or explicit pause)
     alertedHot: false,
-    trialActivationSent: false,
+    activationSent: false,
     unreadCount: 0,
     lastReadAt: now,
     summary: null,
@@ -121,7 +115,7 @@ function listConversations({ stage, search } = {}) {
     score: s.lead?.score || 0,
     isHot: s.lead?.status === "hot" || s.alertedHot,
     isEscalated: s.lead?.status === "escalated",
-    trialReady: s.trialActivationSent || false,
+    activationReady: s.activationSent || s.trialActivationSent || false,
     paused: s.paused,
     unreadCount: s.unreadCount || 0,
     lastMessage: lastMessagePreview(s),

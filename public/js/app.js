@@ -188,7 +188,7 @@ function renderInboxList() {
         ${c.unreadCount ? `<span class="unread-dot"></span><span class="unread-count">${c.unreadCount}</span>` : ""}
         ${c.isHot ? `<span class="tag hot">🔥 Hot</span>` : ""}
         ${c.isEscalated ? `<span class="tag escalated">⚠️ Escalated</span>` : ""}
-        ${c.trialReady ? `<span class="tag trial-ready">🚀 Trial Ready</span>` : ""}
+        ${c.activationReady ? `<span class="tag activation-ready">🚀 Ready</span>` : ""}
         <span class="${stageTagClass(c.stage)}">${escapeHtml(c.stage)}</span>
         ${c.paused ? `<span class="tag">Paused</span>` : ""}
       </div>
